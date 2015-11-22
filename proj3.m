@@ -23,33 +23,33 @@ for i = 1 : k
     T(i, :) = (labels == (i-1));
 end
 
-% Logistic regression weights D x K
-Wlr = zeros(d, k);
-
-% LR biases 1 x K 
-blr = 0.01 * ones(1, k);
-
-% learning rate
-eta = 1;
-
-% error
-lgr_error = zeros(1, length(images));
-
-% gradient descent
-for i = 1 : length(images)
-    a = Wlr' * images(:, i) + blr';
-    
-    y = zeros(k, 1);
-    exp_a = exp(a);
-    sigma_a = sum(exp(a));
-    for m = 1 : k
-        y(m, 1) = exp_a(m, 1) / sigma_a;
-    end
-    Wlr = Wlr - eta * ( images(:, i) * (y - T(:, i))');
-    lgr_error(1, i) = -1 * sum(T(:, i) - y);
-end
-
-plot(1:length(images), lgr_error);
+% % Logistic regression weights D x K
+% Wlr = zeros(d, k);
+% 
+% % LR biases 1 x K 
+% blr = 0.01 * ones(1, k);
+% 
+% % learning rate
+% eta = 1;
+% 
+% % error
+% lgr_error = zeros(1, length(images));
+% 
+% % gradient descent
+% for i = 1 : length(images)
+%     a = Wlr' * images(:, i) + blr';
+%     
+%     y = zeros(k, 1);
+%     exp_a = exp(a);
+%     sigma_a = sum(exp(a));
+%     for m = 1 : k
+%         y(m, 1) = exp_a(m, 1) / sigma_a;
+%     end
+%     Wlr = Wlr - eta * ( images(:, i) * (y - T(:, i))');
+%     lgr_error(1, i) = -1 * sum(T(:, i) - y);
+% end
+% 
+% plot(1:length(images), lgr_error);
 
 
 % Neural net
@@ -72,6 +72,7 @@ bnn2 = 0.01 * ones(1, k);
 h = 'sigmoid';
 
 % NN gradient descent
+etaNN = 0.1;
 for i = 1 : length(images)
     % feed forward propagation
     z = zeros(j, 1);
@@ -88,7 +89,14 @@ for i = 1 : length(images)
         y(m, 1) = exp_ak(m, 1) / sigma_ak;
     end
     
+    % back propagation
+    del_k = y - T(:, i);
+    del_j = sigmoidGradient(z) .* (Wnn2 * del_k);
+    grad1 = images(:,i) * del_j';
+    grad2 = z * del_k';
     
+    Wnn1 = Wnn1 - etaNN * grad1;
+    Wnn2 = Wnn2 - etaNN * grad2;
 end
 
-%save('proj3.mat');
+save('proj3.mat');
