@@ -9,25 +9,36 @@ personNumber = '50169797';
 
 format long g
 
-images = loadMNISTImages('../data/train-images.idx3-ubyte');
-labels = loadMNISTLabels('../data/train-labels.idx1-ubyte');
-
 % 10 digits
 k = 10;
 
-d = size(images,1);
+% training set
+images = loadMNISTImages('../data/train-images.idx3-ubyte');
+labels = loadMNISTLabels('../data/train-labels.idx1-ubyte');
 
 % target matrix, label 0 is mapped to 1, label 1 to 2 and so on
-T = zeros(k, length(images));
+T = zeros(k, length(labels));
 for i = 1 : k
     T(i, :) = (labels == (i-1));
 end
+
+% validation set
+valImages = loadMNISTImages('../data/t10k-images.idx3-ubyte');
+valLabels = loadMNISTLabels('../data/t10k-labels.idx1-ubyte');
+
+% target matrix, label 0 is mapped to 1, label 1 to 2 and so on
+valT = zeros(k, length(valLabels));
+for i = 1 : k
+    valT(i, :) = (valLabels == (i-1));
+end
+
+d = size(images,1);
 
 % Logistic regression weights D x K
 Wlr = zeros(d, k);
 
 % LR biases 1 x K 
-blr = 0.01 * ones(1, k);
+blr = 0.1 * ones(1, k);
 
 % learning rate
 eta = 1;
@@ -39,18 +50,27 @@ lgr_error = zeros(1, length(images));
 for i = 1 : length(images)
     a = Wlr' * images(:, i) + blr';
     
+    % normalize a to avoid huge values in softmax
+    a = a / max(a);
+    
     y = zeros(k, 1);
     exp_a = exp(a);
     sigma_a = sum(exp(a));
     for m = 1 : k
         y(m, 1) = exp_a(m, 1) / sigma_a;
     end
-    Wlr = Wlr - eta * ( images(:, i) * (y - T(:, i))');
-    lgr_error(1, i) = -1 * sum(T(:, i) - y);
+    Wlr = Wlr - eta * ( images(:, i) * (y - T(:, i))' );
+    lgr_error(1, i) = -1 * sum(T(:, i) - log(y));
 end
 
-plot(1:length(images), lgr_error);
+% plot(1:length(images), lgr_error);
 
+% validate the weights
+predictLGR = bsxfun(@plus, Wlr' * valImages, blr');
+[~, c] = max(predictLGR, [], 1); 
+c = (c - 1)';
+
+valError = sum(c ~= valLabels) / size(valLabels, 1);
 
 % Neural net
 % number of hidden units
