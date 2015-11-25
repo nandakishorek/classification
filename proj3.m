@@ -77,12 +77,15 @@ valError = sum(c ~= valLabels) / size(valLabels, 1);
 j = 5;
 
 % weights for first layer d x j
+rng default
 Wnn1 = zeros(d, j);
 epsilon_init = sqrt(6) / sqrt(d + j);
-W = (rand(j, d) * 2 * epsilon_init - epsilon_init)';
+Wnn1 = (rand(j, d) * 2 * epsilon_init - epsilon_init)';
 
 % weights for first layer j x k
 Wnn2 = zeros(j, k);
+epsilon_init = sqrt(6) / sqrt(j + k);
+Wnn2 = (rand(k, j) * 2 * epsilon_init - epsilon_init)';
 
 % bias for first layer 1 x j
 bnn1 = 0.01 * ones(1, j);
@@ -94,7 +97,7 @@ bnn2 = 0.01 * ones(1, k);
 h = 'sigmoid';
 
 % NN gradient descent
-etaNN = 0.5;
+etaNN = 0.2;
 for i = 1 : length(images)
     % feed forward propagation
     z = zeros(j, 1);
@@ -104,6 +107,7 @@ for i = 1 : length(images)
     end
     
     a = bsxfun(@plus, Wnn2' * z, bnn2');
+    a = a / (max(a) * 5);
     y = zeros(k, 1);
     exp_ak = exp(a);
     sigma_ak = sum(exp(a));
@@ -122,10 +126,10 @@ for i = 1 : length(images)
 end
 
 % fprintf('starting fminunc');
-% options = optimset('Display','iter','GradObj', 'on', 'MaxIter', 400);
+% options = optimset('Display','iter','GradObj', 'on', 'MaxIter', 1);
 % [theta, cost] = fminunc(@(t)(errorFunction(t, d, j, k, bnn1, bnn2, images, T)), [Wnn1(:);Wnn2(:)], options);
 
-fprintf('validating weights for NN');
+fprintf('validating weights for NN\n');
 % validate the weights
 predictNN = bsxfun(@plus, Wnn1' * valImages, bnn1');
 predictNN = sigmoid(predictNN);
