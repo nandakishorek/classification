@@ -51,7 +51,7 @@ for i = 1 : length(images)
     a = Wlr' * images(:, i) + blr';
     
     % normalize a to avoid huge values in softmax
-    a = a / max(a);
+    a = a / 300;
     
     y = zeros(k, 1);
     exp_a = exp(a);
@@ -60,10 +60,10 @@ for i = 1 : length(images)
         y(m, 1) = exp_a(m, 1) / sigma_a;
     end
     Wlr = Wlr - eta * ( images(:, i) * (y - T(:, i))' );
-    lgr_error(1, i) = -1 * sum(T(:, i) - log(y));
+    lgr_error(1, i) = -1 * T(:, i)' * log(y);    
 end
 
-% plot(1:length(images), lgr_error);
+plot(1:length(images), lgr_error);
 
 % validate the weights
 predictLGR = bsxfun(@plus, Wlr' * valImages, blr');
