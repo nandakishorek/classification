@@ -20,7 +20,7 @@ function [J, grad] = errorFunction(W, d, j, k, bnn1, bnn2, X, y)
         end
     end
     
-    J = sum(-1 * sum(y - log(yk))) / length(y);
+    J = sum(-1 * sum(y .* log(yk))) / length(y);
     
     % back propagation
     del_k = yk - y;
