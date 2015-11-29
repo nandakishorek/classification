@@ -74,30 +74,28 @@ valError = sum(c ~= valLabels) / size(valLabels, 1);
 
 % Neural net
 % number of hidden units
-j = 5;
+j = 100;
 
 % weights for first layer d x j
 rng default
-Wnn1 = zeros(d, j);
 epsilon_init = sqrt(6) / sqrt(d + j);
 Wnn1 = (rand(j, d) * 2 * epsilon_init - epsilon_init)';
 
 % weights for first layer j x k
-Wnn2 = zeros(j, k);
 epsilon_init = sqrt(6) / sqrt(j + k);
 Wnn2 = (rand(k, j) * 2 * epsilon_init - epsilon_init)';
 
 % bias for first layer 1 x j
-bnn1 = 0.01 * ones(1, j);
+bnn1 = 0.5 * ones(1, j);
 
 % bias for first layer 1 x k
-bnn2 = 0.01 * ones(1, k);
+bnn2 = 0.5 * ones(1, k);
 
 % activation function
 h = 'sigmoid';
 
 % NN gradient descent
-etaNN = 0.2;
+etaNN = 0.0001;
 for i = 1 : length(images)
     % feed forward propagation
     z = zeros(j, 1);
@@ -107,7 +105,7 @@ for i = 1 : length(images)
     end
     
     a = bsxfun(@plus, Wnn2' * z, bnn2');
-    a = a / (max(a) * 5);
+    a = a / (max(a) * 50);
     y = zeros(k, 1);
     exp_ak = exp(a);
     sigma_ak = sum(exp(a));
