@@ -139,4 +139,5 @@ c2 = (c2 - 1)';
 
 valErrorNN = sum(c2 ~= valLabels) / size(valLabels, 1);
 
-save('proj3.mat');
+save('proj3_all.mat');
+save('proj3.mat', 'Wlr', 'blr', 'Wnn1', 'Wnn2', 'bnn1', 'bnn2', 'h');
