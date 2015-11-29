@@ -16,6 +16,10 @@ k = 10;
 images = loadMNISTImages('../data/train-images.idx3-ubyte');
 labels = loadMNISTLabels('../data/train-labels.idx1-ubyte');
 
+% normalize
+[images, mu, sigma] = zscore(images');
+images = images';
+
 % target matrix, label 0 is mapped to 1, label 1 to 2 and so on
 T = zeros(k, length(labels));
 for i = 1 : k
@@ -24,6 +28,8 @@ end
 
 % validation set
 valImages = loadMNISTImages('../data/t10k-images.idx3-ubyte');
+valImages = normalize(valImages', mu, sigma);
+valImages = valImages';
 valLabels = loadMNISTLabels('../data/t10k-labels.idx1-ubyte');
 
 % target matrix, label 0 is mapped to 1, label 1 to 2 and so on
@@ -41,7 +47,7 @@ Wlr = zeros(d, k);
 blr = 0.1 * ones(1, k);
 
 % learning rate
-eta = 1;
+eta = 0.35;
 
 % error
 lgr_error = zeros(1, length(images));
@@ -51,7 +57,7 @@ for i = 1 : length(images)
     a = Wlr' * images(:, i) + blr';
     
     % normalize a to avoid huge values in softmax
-    a = a / 300;
+    a = a / 750;
     
     y = zeros(k, 1);
     exp_a = exp(a);
@@ -131,7 +137,7 @@ fprintf('validating weights for NN\n');
 predictNN = bsxfun(@plus, Wnn1' * valImages, bnn1');
 predictNN = tanh(predictNN);
 predictNN = bsxfun(@plus, Wnn2' * predictNN, bnn2');
-[~, c2] = max(predictNN, [], 1); 
+[~, c2] = max(predictNN, [], 1);
 c2 = (c2 - 1)';
 
 valErrorNN = sum(c2 ~= valLabels) / size(valLabels, 1);
