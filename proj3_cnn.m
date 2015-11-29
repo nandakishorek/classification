@@ -10,7 +10,9 @@ personNumber = '50169797';
 format long g
 
 % training set
-train_x = loadMNISTImages('../data/train-images.idx3-ubyte')';
+train_x = loadMNISTImages('../data/train-images.idx3-ubyte');
+train_x = reshape(train_x,28,28,60000);
+
 labels = loadMNISTLabels('../data/train-labels.idx1-ubyte');
 
 % 10 digits
@@ -21,10 +23,10 @@ train_y = zeros(k, length(labels));
 for i = 1 : k
     train_y(i, :) = (labels == (i-1));
 end
-train_y = train_y';
 
 % validation set
-test_x = loadMNISTImages('../data/t10k-images.idx3-ubyte')';
+test_x = loadMNISTImages('../data/t10k-images.idx3-ubyte');
+test_x = reshape(test_x,28,28,10000);
 valLabels = loadMNISTLabels('../data/t10k-labels.idx1-ubyte');
 
 % target matrix, label 0 is mapped to 1, label 1 to 2 and so on
@@ -32,7 +34,6 @@ test_y = zeros(k, length(valLabels));
 for i = 1 : k
     test_y(i, :) = (valLabels == (i-1));
 end
-test_y = test_y';
 
 %% ex1 Train a 6c-2s-12c-2s Convolutional neural network 
 %will run 1 epoch in about 200 second and get around 11% error. 
