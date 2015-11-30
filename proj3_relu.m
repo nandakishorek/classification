@@ -19,6 +19,7 @@ labels = loadMNISTLabels('../data/train-labels.idx1-ubyte');
 % normalize
 [images, mu, sigma] = zscore(images');
 images = images';
+images = [ones(1, size(images,2)); images];
 
 % target matrix, label 0 is mapped to 1, label 1 to 2 and so on
 T = zeros(k, length(labels));
@@ -30,6 +31,8 @@ end
 valImages = loadMNISTImages('../data/t10k-images.idx3-ubyte');
 valImages = normalize(valImages', mu, sigma);
 valImages = valImages';
+valImages = [ones(1,size(valImages,2)); valImages];
+
 valLabels = loadMNISTLabels('../data/t10k-labels.idx1-ubyte');
 
 % target matrix, label 0 is mapped to 1, label 1 to 2 and so on
@@ -38,64 +41,65 @@ for i = 1 : k
     valT(i, :) = (valLabels == (i-1));
 end
 
-d = size(images,1);
-
-% Logistic regression weights D x K
-Wlr = zeros(d, k);
+d = 784;
 
 % LR biases 1 x K 
 blr = 0.1 * ones(1, k);
 
+% Logistic regression weights D x K
+Wlr = [blr; zeros(d, k)];
+
 % learning rate
-eta = 0.35;
+eta = 10^-4;
 
 % error
 lgr_error = zeros(1, length(images));
 
 % gradient descent
-for i = 1 : length(images)
-    a = Wlr' * images(:, i) + blr';
-    
-    % normalize a to avoid huge values in softmax
-    a = a / 750;
-    
+for i = 0 : length(images) * 5 - 1
+    j = mod(i, length(images)) + 1;
+    a = Wlr' * images(:, j);    
     y = zeros(k, 1);
     exp_a = exp(a);
     sigma_a = sum(exp(a));
     for m = 1 : k
         y(m, 1) = exp_a(m, 1) / sigma_a;
     end
-    Wlr = Wlr - eta * ( images(:, i) * (y - T(:, i))' );
-    lgr_error(1, i) = -1 * T(:, i)' * log(y);
+    Wlr = Wlr - eta * ( images(:, j) * (y - T(:, j))' );
+    lgr_error(1, j) = -1 * T(:, j)' * log(y);
 end
 
 % plot(1:length(images), lgr_error);
 
 % validate the weights
-predictLGR = bsxfun(@plus, Wlr' * valImages, blr');
+predictLGR = Wlr' * valImages;
 [~, c] = max(predictLGR, [], 1); 
 c = (c - 1)';
 
 valError = sum(c ~= valLabels) / size(valLabels, 1);
+Wlr = Wlr(2:end,:);
+
 
 % Neural net
 % number of hidden units
 j = 55;
 
+% bias for first layer 1 x j
+bnn1 = 0.5 * ones(1, j);
+
+% bias for second layer 1 x k
+bnn2 = 0.5 * ones(1, k);
+
 % weights for first layer d x j
 rng default
 epsilon_init = sqrt(6) / sqrt(d + j);
 Wnn1 = (rand(j, d) * 2 * epsilon_init - epsilon_init)';
+Wnn1 = [bnn1; Wnn1];
 
 % weights for first layer j x k
 epsilon_init = sqrt(6) / sqrt(j + k);
 Wnn2 = (rand(k, j) * 2 * epsilon_init - epsilon_init)';
-
-% bias for first layer 1 x j
-bnn1 = 0.5 * ones(1, j);
-
-% bias for first layer 1 x k
-bnn2 = 0.5 * ones(1, k);
+Wnn2 = [bnn2; Wnn2];
 
 % activation function
 h = 'ReLu';
@@ -104,13 +108,15 @@ h = 'ReLu';
 etaNN = 0.001;
 for i = 1 : length(images)
     % feed forward propagation
-    z = zeros(j, 1);
+    z = zeros(j + 1, 1);
+    z(1,1) = 1;
+    
     for m = 1 : j
-            z(m, 1) = Wnn1(:,m)'* images(:,i) + bnn1(1, m);
+            z(m, 1) = Wnn1(:,m)'* images(:,i);
             z(m, 1) = relu(z(m,1)); % sigmoid
     end
     
-    a = bsxfun(@plus, Wnn2' * z, bnn2');
+    a = Wnn2' * z;
     y = zeros(k, 1);
     exp_ak = exp(a);
     sigma_ak = sum(exp(a));
@@ -124,7 +130,7 @@ for i = 1 : length(images)
     grad1 = images(:,i) * del_j';
     grad2 = z * del_k';
     
-    Wnn1 = Wnn1 - (etaNN * grad1);
+    Wnn1 = Wnn1 - (etaNN * grad1(:,2:end));
     Wnn2 = Wnn2 - (etaNN * grad2);
 end
 
@@ -134,13 +140,17 @@ end
 
 fprintf('validating weights for NN\n');
 % validate the weights
-predictNN = bsxfun(@plus, Wnn1' * valImages, bnn1');
-predictNN = tanh(predictNN);
-predictNN = bsxfun(@plus, Wnn2' * predictNN, bnn2');
+predictNN = Wnn1' * valImages;
+predictNN = [ones(1,size(valImages,2));relu(predictNN)];
+predictNN = Wnn2' * predictNN;
 [~, c2] = max(predictNN, [], 1);
 c2 = (c2 - 1)';
 
 valErrorNN = sum(c2 ~= valLabels) / size(valLabels, 1);
+
+% remove the bias
+Wnn1 = Wnn1(2:end,:);
+Wnn2 = Wnn2(2:end,:);
 
 save('proj3_relu.mat');
 save('proj3.mat', 'Wlr', 'blr', 'Wnn1', 'Wnn2', 'bnn1', 'bnn2', 'h');
