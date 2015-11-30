@@ -19,6 +19,8 @@ labels = loadMNISTLabels('../data/train-labels.idx1-ubyte');
 % normalize
 [images, mu, sigma] = zscore(images');
 images = images';
+
+% append extra 1's row
 images = [ones(1, size(images,2)); images];
 
 % target matrix, label 0 is mapped to 1, label 1 to 2 and so on
@@ -31,6 +33,8 @@ end
 valImages = loadMNISTImages('../data/t10k-images.idx3-ubyte');
 valImages = normalize(valImages', mu, sigma);
 valImages = valImages';
+
+% append extra 1's row
 valImages = [ones(1,size(valImages,2)); valImages];
 
 valLabels = loadMNISTLabels('../data/t10k-labels.idx1-ubyte');
@@ -56,9 +60,9 @@ eta = 10^-4;
 lgr_error = zeros(1, length(images));
 
 % gradient descent
-for i = 0 : length(images) * 5 - 1
+for i = 0 : length(images) * 105 - 1
     j = mod(i, length(images)) + 1;
-    a = Wlr' * images(:, j);    
+    a = Wlr' * images(:, j);
     y = zeros(k, 1);
     exp_a = exp(a);
     sigma_a = sum(exp(a));
@@ -79,6 +83,9 @@ c = (c - 1)';
 valError = sum(c ~= valLabels) / size(valLabels, 1);
 Wlr = Wlr(2:end,:);
 
+% remove the extra 1's rows
+images = images(2:end,:);
+valImages = valImages(2:end,:);
 
 % Neural net
 % number of hidden units
@@ -94,12 +101,10 @@ bnn2 = 0.5 * ones(1, k);
 rng default
 epsilon_init = sqrt(6) / sqrt(d + j);
 Wnn1 = (rand(j, d) * 2 * epsilon_init - epsilon_init)';
-Wnn1 = [bnn1; Wnn1];
 
 % weights for first layer j x k
 epsilon_init = sqrt(6) / sqrt(j + k);
 Wnn2 = (rand(k, j) * 2 * epsilon_init - epsilon_init)';
-Wnn2 = [bnn2; Wnn2];
 
 % activation function
 h = 'ReLu';
@@ -108,15 +113,14 @@ h = 'ReLu';
 etaNN = 0.001;
 for i = 1 : length(images)
     % feed forward propagation
-    z = zeros(j + 1, 1);
-    z(1,1) = 1;
+    z = zeros(j, 1);
     
     for m = 1 : j
-            z(m, 1) = Wnn1(:,m)'* images(:,i);
-            z(m, 1) = relu(z(m,1)); % sigmoid
+        z(m, 1) = Wnn1(:,m)'* images(:,i) + bnn1(1, m);
+        z(m, 1) = relu(z(m,1)); % relu
     end
     
-    a = Wnn2' * z;
+    a = bsxfun(@plus, Wnn2' * z, bnn2');
     y = zeros(k, 1);
     exp_ak = exp(a);
     sigma_ak = sum(exp(a));
@@ -130,7 +134,7 @@ for i = 1 : length(images)
     grad1 = images(:,i) * del_j';
     grad2 = z * del_k';
     
-    Wnn1 = Wnn1 - (etaNN * grad1(:,2:end));
+    Wnn1 = Wnn1 - (etaNN * grad1);
     Wnn2 = Wnn2 - (etaNN * grad2);
 end
 
@@ -138,19 +142,16 @@ end
 % options = optimset('Display','iter','GradObj', 'on', 'MaxIter', 1);
 % [theta, cost] = fminunc(@(t)(errorFunction(t, d, j, k, bnn1, bnn2, images, T)), [Wnn1(:);Wnn2(:)], options);
 
-fprintf('validating weights for NN\n');
 % validate the weights
-predictNN = Wnn1' * valImages;
-predictNN = [ones(1,size(valImages,2));relu(predictNN)];
-predictNN = Wnn2' * predictNN;
+fprintf('validating weights for NN\n');
+
+predictNN = bsxfun(@plus, Wnn1' * valImages, bnn1');
+predictNN = relu(predictNN);
+predictNN = bsxfun(@plus, Wnn2' * predictNN, bnn2');
 [~, c2] = max(predictNN, [], 1);
 c2 = (c2 - 1)';
 
 valErrorNN = sum(c2 ~= valLabels) / size(valLabels, 1);
-
-% remove the bias
-Wnn1 = Wnn1(2:end,:);
-Wnn2 = Wnn2(2:end,:);
 
 save('proj3_relu.mat');
 save('proj3.mat', 'Wlr', 'blr', 'Wnn1', 'Wnn2', 'bnn1', 'bnn2', 'h');
