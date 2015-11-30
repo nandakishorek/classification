@@ -54,13 +54,13 @@ blr = 0.1 * ones(1, k);
 Wlr = [blr; zeros(d, k)];
 
 % learning rate
-eta = 10^-4;
+eta = 10^-3;
 
 % error
 lgr_error = zeros(1, length(images));
 
 % gradient descent
-for i = 0 : length(images) * 105 - 1
+for i = 0 : length(images) * 6 - 1
     j = mod(i, length(images)) + 1;
     a = Wlr' * images(:, j);
     y = zeros(k, 1);
