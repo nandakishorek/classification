@@ -16,9 +16,9 @@ k = 10;
 images = loadMNISTImages('../data/train-images.idx3-ubyte');
 labels = loadMNISTLabels('../data/train-labels.idx1-ubyte');
 
-% normalize
-[images, mu, sigma] = zscore(images');
-images = images';
+% % normalize
+% [images, mu, sigma] = zscore(images');
+% images = images';
 
 % append extra 1's row
 images = [ones(1, size(images,2)); images];
@@ -31,8 +31,8 @@ end
 
 % validation set
 valImages = loadMNISTImages('../data/t10k-images.idx3-ubyte');
-valImages = normalize(valImages', mu, sigma);
-valImages = valImages';
+% valImages = normalize(valImages', mu, sigma);
+% valImages = valImages';
 
 % append extra 1's row
 valImages = [ones(1,size(valImages,2)); valImages];
