@@ -89,7 +89,7 @@ valImages = valImages(2:end,:);
 
 % Neural net
 % number of hidden units
-j = 55;
+j = 45;
 
 % bias for first layer 1 x j
 bnn1 = 0.5 * ones(1, j);
