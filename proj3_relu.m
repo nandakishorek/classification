@@ -110,7 +110,7 @@ Wnn2 = (rand(k, j) * 2 * epsilon_init - epsilon_init)';
 h = 'ReLu';
 
 % NN gradient descent
-etaNN = 0.001;
+etaNN = 0.01;
 for i = 1 : length(images)
     % feed forward propagation
     z = zeros(j, 1);
