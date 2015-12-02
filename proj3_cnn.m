@@ -50,7 +50,7 @@ cnn = cnnsetup(cnn, train_x, train_y);
 
 opts.alpha = 1;
 opts.batchsize = 50;
-opts.numepochs = 1;
+opts.numepochs = 10;
 
 cnn = cnntrain(cnn, train_x, train_y, opts);
 
@@ -58,6 +58,8 @@ cnn = cnntrain(cnn, train_x, train_y, opts);
 
 %plot mean squared error
 figure; plot(cnn.rL);
+xlabel('iterations', 'Color','r');
+ylabel('classification error', 'Color', 'r');
 
 assert(er<0.12, 'Too big error');
 
